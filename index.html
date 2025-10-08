@@ -1,0 +1,355 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Playlist Manager</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a, #be185d);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border: 1.5px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 8px 32px 0 rgba(30,58,138,0.18);
+            transition: box-shadow 0.4s;
+        }
+        .glass-card:hover {
+            box-shadow: 0 16px 48px 0 rgba(190,24,93,0.22);
+        }
+        .playlist-item.active {
+            background: linear-gradient(90deg, rgba(29,78,216,0.7), rgba(190,24,93,0.5));
+            color: #fff;
+            box-shadow: 0 2px 12px 0 rgba(29,78,216,0.12);
+        }
+        .playlist-item {
+            transition: background 0.3s, box-shadow 0.3s, transform 0.2s;
+            cursor: pointer;
+        }
+        .playlist-item:hover {
+            background: linear-gradient(90deg, rgba(190,24,93,0.3), rgba(29,78,216,0.2));
+            transform: scale(1.03);
+            box-shadow: 0 2px 16px 0 rgba(190,24,93,0.18);
+        }
+        .control-btn:hover {
+            transform: scale(1.15) rotate(-6deg);
+            background: linear-gradient(90deg, #be185d 40%, #1e3a8a 100%);
+            box-shadow: 0 2px 12px 0 rgba(190,24,93,0.18);
+        }
+        .control-btn {
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        /* Animated gradient waves background */
+        .animated-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .wave {
+            position: absolute;
+            width: 120vw;
+            height: 40vh;
+            left: -10vw;
+            opacity: 0.5;
+            animation: waveMove 12s linear infinite alternate;
+        }
+        .wave1 { top: 0; background: linear-gradient(90deg, #1e3a8a 60%, #be185d 100%); filter: blur(60px); }
+        .wave2 { top: 30vh; background: linear-gradient(90deg, #be185d 60%, #1e3a8a 100%); filter: blur(80px); animation-delay: 6s; }
+        @keyframes waveMove {
+            0% { transform: translateX(0) scaleY(1); }
+            100% { transform: translateX(-10vw) scaleY(1.1); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 text-white">
+    <!-- Animated background -->
+    <div class="animated-bg">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+    </div>
+    <div class="w-full max-w-4xl glass-card rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col lg:flex-row gap-8">
+        <!-- Left Side: Player UI -->
+        <div class="lg:w-1/3 flex flex-col items-center text-center">
+            <h1 class="text-2xl font-bold mb-4">Now Playing</h1>
+            <div class="relative w-48 h-48 md:w-64 md:h-64 rounded-xl shadow-lg mb-6">
+                <img id="album-art" src="https://placehold.co/300x300/1e3a8a/ffffff?text=Music" alt="Album Art" class="w-full h-full object-cover rounded-xl">
+                <div class="absolute inset-0 bg-black bg-opacity-20 rounded-xl"></div>
+            </div>
+            <div id="song-info" class="w-full">
+                <h2 id="current-title" class="text-2xl font-bold truncate">Playlist Empty</h2>
+                <p id="current-artist" class="text-lg opacity-80">Add a song to start</p>
+            </div>
+            <div class="flex items-center gap-6 mt-6">
+                <button id="prev-btn" class="control-btn p-4 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                </button>
+                <button id="play-pause-btn" class="control-btn p-5 rounded-full bg-blue-600 shadow-lg">
+                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <button id="next-btn" class="control-btn p-4 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                </button>
+            </div>
+        </div>
+        <!-- Right Side: Playlist & Management -->
+        <div class="lg:w-2/3 flex flex-col">
+            <h2 class="text-2xl font-bold mb-4 text-center lg:text-left">My Playlist 🔁</h2>
+            <div id="playlist-container" class="flex-grow bg-black bg-opacity-20 rounded-xl p-4 overflow-y-auto h-64 lg:h-auto"></div>
+            <div class="mt-6">
+                <h3 class="text-xl font-semibold mb-3">Manage Songs</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-black bg-opacity-20 rounded-lg p-4">
+                        <p class="font-medium mb-2">Add New Song</p>
+                        <input type="text" id="title-input" placeholder="Song Title" class="w-full bg-white/10 p-2 rounded mb-2 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="artist-input" placeholder="Artist Name" class="w-full bg-white/10 p-2 rounded mb-2 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="audio-url-input" placeholder="Audio URL (optional)" class="w-full bg-white/10 p-2 rounded mb-2 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="add-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-2 rounded font-semibold transition-colors">Add to Playlist</button>
+                    </div>
+                    <div class="bg-black bg-opacity-20 rounded-lg p-4">
+                        <p class="font-medium mb-2">Delete a Song</p>
+                        <input type="text" id="delete-title-input" placeholder="Song Title to Delete" class="w-full bg-white/10 p-2 rounded mb-2 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        <button id="delete-btn" class="w-full bg-pink-600 hover:bg-pink-700 p-2 rounded font-semibold transition-colors">Delete Song</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="message-modal" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-2 pointer-events-none">
+        <p id="message-text"></p>
+    </div>
+    <audio id="audio-player"></audio>
+    <script>
+        // --- DATA STRUCTURE AND STATE ---
+        const Song = (title, artist, audioSrc, albumArt) => ({
+            title,
+            artist,
+            audioSrc,
+            albumArt,
+            next: null,
+        });
+        let current = null;
+        let isPlaying = false;
+        const currentTitleEl = document.getElementById('current-title');
+        const currentArtistEl = document.getElementById('current-artist');
+        const albumArtEl = document.getElementById('album-art');
+        const songInfoEl = document.getElementById('song-info');
+        const playlistContainer = document.getElementById('playlist-container');
+        const addBtn = document.getElementById('add-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const titleInput = document.getElementById('title-input');
+        const artistInput = document.getElementById('artist-input');
+        const audioUrlInput = document.getElementById('audio-url-input');
+        const deleteTitleInput = document.getElementById('delete-title-input');
+        const messageModal = document.getElementById('message-modal');
+        const messageText = document.getElementById('message-text');
+        const audioPlayer = document.getElementById('audio-player');
+        function showMessage(message, isError = false) {
+            messageText.textContent = message;
+            messageModal.className = `fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-2 pointer-events-none ${isError ? 'bg-pink-600' : 'bg-blue-600'}`;
+            messageModal.style.transition = 'opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1)';
+            messageModal.classList.remove('opacity-0', 'translate-y-2');
+            messageModal.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                messageModal.classList.remove('opacity-100', 'translate-y-0');
+                messageModal.classList.add('opacity-0', 'translate-y-2');
+            }, 2200);
+        }
+        function updateUI() {
+            playlistContainer.innerHTML = '';
+            if (current === null) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'Your playlist is feeling a bit lonely...';
+                emptyMessage.className = 'text-center text-white/60 p-4';
+                playlistContainer.appendChild(emptyMessage);
+                audioPlayer.src = '';
+                togglePlayPauseIcon(false);
+                currentTitleEl.textContent = 'Playlist Empty';
+                currentArtistEl.textContent = 'Add a song to start';
+                albumArtEl.src = 'https://placehold.co/300x300/1e3a8a/ffffff?text=Music';
+                return;
+            }
+            let temp = current;
+            let songIndex = 1;
+            do {
+                const item = document.createElement('div');
+                item.className = 'playlist-item p-3 rounded mb-2 flex items-center justify-between animate-fadeInUp' + (temp === current ? ' active' : '');
+                item.style.animationDelay = `${(songIndex-1) * 0.12}s`;
+                item.innerHTML = `
+                    <div>
+                        <span class="font-bold">${temp.title}</span> <span class="opacity-70">by ${temp.artist}</span>
+                    </div>
+                    <audio controls src="${temp.audioSrc}" class="ml-4" style="height:32px;"></audio>
+                `;
+                playlistContainer.appendChild(item);
+                temp = temp.next;
+                songIndex++;
+            } while (temp !== current);
+        }
+        function togglePlayPauseIcon(showPause) {
+            playIcon.classList.toggle('hidden', showPause);
+            pauseIcon.classList.toggle('hidden', !showPause);
+            isPlaying = showPause;
+        }
+        function loadSong(song) {
+            if (song.audioSrc) {
+                audioPlayer.src = song.audioSrc;
+            } else {
+                showMessage("This song doesn't have an audio source.", true);
+                audioPlayer.src = '';
+            }
+            updateUI();
+        }
+        function playSong() {
+            if (audioPlayer.src) {
+                audioPlayer.play();
+                togglePlayPauseIcon(true);
+            } else if (current) {
+                showMessage("No audio for the current song.", true);
+            } else {
+                showMessage("Playlist is empty.", true);
+            }
+        }
+        function pauseSong() {
+            audioPlayer.pause();
+            togglePlayPauseIcon(false);
+        }
+        function playPauseSong() {
+            if (isPlaying) {
+                pauseSong();
+            } else {
+                playSong();
+            }
+            updateUI();
+        }
+        function addSong() {
+            const title = titleInput.value.trim();
+            const artist = artistInput.value.trim();
+            const audioSrc = audioUrlInput.value.trim();
+            const albumArt = `https://placehold.co/300x300/1e3a8a/ffffff?text=${encodeURIComponent(title.charAt(0))}`;
+            if (!title || !artist) {
+                showMessage('Please enter both title and artist.', true);
+                return;
+            }
+            const newSong = Song(title, artist, audioSrc, albumArt);
+            if (current === null) {
+                current = newSong;
+                current.next = current;
+                loadSong(current);
+            } else {
+                let tail = current;
+                while (tail.next !== current) tail = tail.next;
+                tail.next = newSong;
+                newSong.next = current;
+            }
+            titleInput.value = '';
+            artistInput.value = '';
+            audioUrlInput.value = '';
+            showMessage(`'${title}' was added!`);
+            updateUI();
+        }
+        function deleteSong() {
+            const titleToDelete = deleteTitleInput.value.trim();
+            if (!titleToDelete || current === null) return;
+            let wasPlaying = isPlaying && current.title.toLowerCase() === titleToDelete.toLowerCase();
+            let nodeToDelete = null;
+            let prev = current;
+            while (prev.next !== current) {
+                if (prev.next.title.toLowerCase() === titleToDelete.toLowerCase()) {
+                    nodeToDelete = prev.next;
+                    break;
+                }
+                prev = prev.next;
+            }
+            if (current.title.toLowerCase() === titleToDelete.toLowerCase()) {
+                nodeToDelete = current;
+            }
+            if (nodeToDelete === null) {
+                showMessage(`Song '${titleToDelete}' not found.`, true);
+                return;
+            }
+            if (nodeToDelete.next === nodeToDelete) {
+                current = null;
+                pauseSong();
+            } else {
+                if (nodeToDelete === current) {
+                    prev.next = current.next;
+                    current = current.next;
+                    if(wasPlaying) playSong();
+                } else {
+                    prev.next = nodeToDelete.next;
+                }
+            }
+            deleteTitleInput.value = '';
+            showMessage(`'${titleToDelete}' was deleted.`, true);
+            if (current) loadSong(current);
+            updateUI();
+        }
+        function nextSong() {
+            if (current) {
+                current = current.next;
+                loadSong(current);
+                playSong();
+            }
+        }
+        function previousSong() {
+            if (current) {
+                let prev = current;
+                while (prev.next !== current) prev = prev.next;
+                current = prev;
+                loadSong(current);
+                playSong();
+            }
+        }
+        addBtn.addEventListener('click', addSong);
+        deleteBtn.addEventListener('click', deleteSong);
+        nextBtn.addEventListener('click', nextSong);
+        prevBtn.addEventListener('click', previousSong);
+        playPauseBtn.addEventListener('click', playPauseSong);
+        audioUrlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') addSong(); });
+        deleteTitleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') deleteSong(); });
+        audioPlayer.addEventListener('ended', nextSong);
+        function initializePlaylist() {
+            const initialSongs = [
+                { title: 'Barbaad', artist: 'Jubin Nautiyal', audioSrc: 'audio/mysong.mp3', albumArt: 'https://placehold.co/300x300/1e3a8a/ffffff?text=Barbaad' },
+                { title: 'Forest Lullaby', artist: 'Lesfm', audioSrc: 'https://cdn.pixabay.com/audio/2022/02/16/audio_29b28a4742.mp3', albumArt: 'https://placehold.co/300x300/166534/ffffff?text=Forest' },
+                { title: 'Cradle of Your Soul', artist: 'Liborio Conti', audioSrc: 'https://cdn.pixabay.com/audio/2023/10/05/audio_589b14299d.mp3', albumArt: 'https://placehold.co/300x300/4c1d95/ffffff?text=Galaxy' },
+                { title: 'In the Forest', artist: 'Lesfm', audioSrc: 'https://cdn.pixabay.com/audio/2022/02/16/audio_82a3a3b522.mp3', albumArt: 'https://placehold.co/300x300/047857/ffffff?text=Nature' },
+                { title: 'Good Night', artist: 'FASSounds', audioSrc: 'https://cdn.pixabay.com/audio/2023/11/17/audio_c39b2512a3.mp3', albumArt: 'https://placehold.co/300x300/1e293b/ffffff?text=Night'}
+            ];
+            initialSongs.forEach(song => {
+                const newSong = Song(song.title, song.artist, song.audioSrc, song.albumArt);
+                if (current === null) {
+                    current = newSong;
+                    current.next = current;
+                } else {
+                    let tail = current;
+                    while (tail.next !== current) tail = tail.next;
+                    tail.next = newSong;
+                    newSong.next = current;
+                }
+            });
+            if (current) loadSong(current);
+            updateUI();
+        }
+        document.addEventListener('DOMContentLoaded', initializePlaylist);
+    </script>
+</body>
+</html>
+
