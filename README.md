@@ -41,8 +41,9 @@ This project uses a **Circular Doubly Linked List** where:
 ## Sample Usage
 
 The application comes pre-loaded with three songs:
+- "Barbaad" by Jubin Nautiyal
 - "Shape of You" by Ed Sheeran
-- "Blinding Lights" by The Weeknd
+- "Cradle of your Soul" by Liborio Conti
 - "Perfect" by Ed Sheeran
 
 You can add your own songs, navigate through the playlist, and manage your music collection using the interactive menu.
